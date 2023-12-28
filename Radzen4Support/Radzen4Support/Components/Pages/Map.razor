@@ -1,0 +1,44 @@
+﻿@page "/map"
+@using Radzen4Support.Models
+@using System.Text.Json
+@rendermode InteractiveServer
+@* @rendermode @(new InteractiveServerRenderMode(prerender:false)) *@
+@inject IJSRuntime JSRuntime
+@inject IConfiguration Configuration
+
+<h3>Map</h3>
+<p>@Configuration["GoogleApiKey"]</p>
+
+@if (Stations != null)
+{
+    <RadzenGoogleMap @ref="map" style="height: 600px" Options=@(new Dictionary<string, object> { { "disableDoubleClickZoom", true } }) MarkerClick="MarkerClick"
+                     Zoom="9" Center="@(new GoogleMapPosition() { Lat = 46.49868414506874, Lng =  11.353422303037982 })" ApiKey="@Configuration["GoogleApiKey"]">
+
+        <Markers>
+            @foreach (var item in Stations)
+            {
+                <RadzenGoogleMapMarker Title="@($"{item.Id} - {item.Name}")" Position=@(new GoogleMapPosition() { Lat = (double)item.Latitude, Lng = (double)item.Longitude }) />
+            }
+        </Markers>
+    </RadzenGoogleMap>
+}
+@code {
+    RadzenGoogleMap map;
+    public List<WeatherStation> Stations { get; set; } = new();
+    string apiKey;
+    protected override async Task OnInitializedAsync()
+    {
+        var json = File.ReadAllText("stations.json");
+        var allStations = JsonSerializer.Deserialize<List<WeatherStation>>(json);
+        Stations = allStations.Where(x => x.StationCategoryId == 1).ToList();
+    }
+
+    async Task MarkerClick(RadzenGoogleMapMarker marker)
+    {
+        var code = $@"
+                    alert('{marker.Title.Substring(0, 7)}');
+                    ";
+
+        await JSRuntime.InvokeVoidAsync("eval", code);
+    }
+}

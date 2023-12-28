@@ -361,3 +361,4 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+Radzen4Support/Radzen4Support/appsettings.Development.json
